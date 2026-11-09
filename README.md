@@ -77,30 +77,28 @@ function exportBinaryMask(width, height) {
   offscreen.height = height;
   const offCtx = offscreen.getContext('2d');
   
-  // Fill black background
-  offCtx.fillStyle = '#000000';
-  offCtx.fillRect(0, 0, width, height);
+  // Read brush strokes from overlay canvas
+  const srcData = ctx.getImageData(0, 0, width, height);
+  const outputImgData = offCtx.createImageData(width, height);
+  const srcPixels = srcData.data;
+  const outPixels = outputImgData.data;
   
-  // Paint white mask
-  offCtx.drawImage(canvas, 0, 0, width, height);
-  const imgData = offCtx.getImageData(0, 0, width, height);
-  const data = imgData.data;
-  
-  for (let i = 0; i < data.length; i += 4) {
-    const alpha = data[i + 3];
+  // Binary threshold: Painted -> White, Unpainted -> Black
+  for (let i = 0; i < srcPixels.length; i += 4) {
+    const alpha = srcPixels[i + 3];
     if (alpha > 20) {
-      data[i] = 255;     // R
-      data[i + 1] = 255; // G
-      data[i + 2] = 255; // B
-      data[i + 3] = 255; // A
+      outPixels[i] = 255;     // R
+      outPixels[i + 1] = 255; // G
+      outPixels[i + 2] = 255; // B
+      outPixels[i + 3] = 255; // A
     } else {
-      data[i] = 0;
-      data[i + 1] = 0;
-      data[i + 2] = 0;
-      data[i + 3] = 255;
+      outPixels[i] = 0;       // R
+      outPixels[i + 1] = 0;   // G
+      outPixels[i + 2] = 0;   // B
+      outPixels[i + 3] = 255; // A
     }
   }
-  offCtx.putImageData(imgData, 0, 0);
+  offCtx.putImageData(outputImgData, 0, 0);
   return offscreen.toDataURL('image/png');
 }
 ```
