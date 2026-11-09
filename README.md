@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-CleanerPix-emerald.svg)](https://cleanerpix.com)
+[![Product Hunt](https://img.shields.io/badge/Product%20Hunt-CleanerPix-orange?logo=producthunt&logoColor=white)](https://www.producthunt.com/products/cleanerpix)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-success.svg)](https://cleanerpix.com)
 
 A lightweight, zero-dependency HTML5 Canvas brush masking tool designed for **AI image inpainting**, **object removal**, **watermark erasing**, and **sticker cleanup** workflows.
@@ -32,6 +33,7 @@ This repository provides a standalone, production-tested interactive canvas comp
 ## 🚀 Live Demo & Interactive Playground
 
 - **Full AI Object Removal Tool**: [https://cleanerpix.com](https://cleanerpix.com)
+- **Product Hunt Community**: [https://www.producthunt.com/products/cleanerpix](https://www.producthunt.com/products/cleanerpix)
 - **Sticker & Watermark Eraser**: [https://cleanerpix.com/remove-sticker-from-image](https://cleanerpix.com/remove-sticker-from-image)
 - **GitHub Pages Demo**: [https://zeus-athena.github.io/canvas-inpainting-mask-editor/](https://zeus-athena.github.io/canvas-inpainting-mask-editor/)
 
