@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canvas Inpainting Mask Editor — Interactive Demo</title>
+  <meta name="description" content="A lightweight zero-dependency HTML5 Canvas brush masking tool for AI image inpainting & object removal." />
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    .brand svg {
+      color: var(--primary);
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-cleanerpix {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-cleanerpix:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .gh-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .gh-link:hover {
+      color: var(--text);
+    }
+
+    main {
+      flex: 1;
+      max-width: 1000px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .intro {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .intro h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      background: linear-gradient(to right, #f8fafc, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .intro p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .editor-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .toolbar {
+      padding: 14px 20px;
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    input[type="range"] {
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    button, label.btn-upload {
+      background: #334155;
+      color: var(--text);
+      border: 1px solid #475569;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+
+    button:hover, label.btn-upload:hover {
+      background: #475569;
+    }
+
+    button.btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    button.btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+      touch-action: none;
+    }
+
+    #stage {
+      position: relative;
+      cursor: crosshair;
+    }
+
+    #bg-img {
+      display: block;
+      max-width: 100%;
+      max-height: 480px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    #mask-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+    }
+
+    .brush-cursor {
+      position: fixed;
+      pointer-events: none;
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      border-radius: 50%;
+      background: rgba(168, 85, 247, 0.25);
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 100;
+    }
+
+    /* Modal for exported mask */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 500px;
+      width: 100%;
+      padding: 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 280px;
+      border: 1px solid var(--border);
+      background: black;
+      margin: 0 auto;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 24px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="brush-cursor" id="brush-cursor"></div>
+
+  <header>
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+      </svg>
+      <span>Canvas Mask Editor</span>
+    </div>
+    <div class="header-links">
+      <a href="https://github.com/Zeus-Athena/canvas-inpainting-mask-editor" class="gh-link" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12Z"/>
+        </svg>
+        GitHub
+      </a>
+      <a href="https://cleanerpix.com" class="btn-cleanerpix" target="_blank">
+        Try CleanerPix AI &rarr;
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <div class="intro">
+      <h1>Inpainting Brush Mask Canvas</h1>
+      <p>Interactive client-side canvas mask editor for AI image inpainting models. Paint over unwanted objects, labels, or stickers, and extract the binary mask.</p>
+    </div>
+
+    <div class="editor-wrapper">
+      <div class="toolbar">
+        <div class="tool-group">
+          <label class="btn-upload" for="file-input">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Photo
+          </label>
+          <input type="file" id="file-input" accept="image/*" />
+
+          <div class="slider-wrap">
+            <span>Brush Size</span>
+            <input type="range" id="brush-size" min="6" max="90" value="32" />
+            <span id="brush-size-val">32px</span>
+          </div>
+        </div>
+
+        <div class="tool-group">
+          <button id="undo-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            Undo
+          </button>
+          <button id="clear-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Clear
+          </button>
+          <button id="export-btn" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Mask PNG
+          </button>
+        </div>
+      </div>
+
+      <div class="canvas-container" id="container">
+        <div id="stage">
+          <img id="bg-img" alt="Background Stage" />
+          <canvas id="mask-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3>Exported Binary Inpainting Mask</h3>
+      <p style="font-size: 0.88rem; color: var(--text-muted);">Standard black/white mask ready for AI inpainting APIs (LaMa, Stable Diffusion, OpenCV).</p>
+      <img id="exported-img" alt="Mask Result" />
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="close-modal-btn">Close</button>
+        <a id="download-mask-link" class="btn-cleanerpix" download="mask.png">Download Mask</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      Adapted from the production pipeline of <a href="https://cleanerpix.com" target="_blank">CleanerPix</a> — Free online AI photo eraser & cleanup tool.
+      <br />
+      <span style="font-size: 0.8rem; opacity: 0.8; margin-top: 6px; display: inline-block;">
+        Read our guides: <a href="https://cleanerpix.com/remove-sticker-from-image">Sticker Removal</a> · <a href="https://cleanerpix.com/remove-text-from-image">Text Remover</a> · <a href="https://cleanerpix.com/blog/cleanup-pictures-alternatives">Cleanup Pictures Alternatives</a>
+      </span>
+    </p>
+  </footer>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const bgImg = document.getElementById('bg-img');
+    const canvas = document.getElementById('mask-canvas');
+    const ctx = canvas.getContext('2d');
+    const brushSizeSlider = document.getElementById('brush-size');
+    const brushSizeVal = document.getElementById('brush-size-val');
+    const brushCursor = document.getElementById('brush-cursor');
+    const fileInput = document.getElementById('file-input');
+    const undoBtn = document.getElementById('undo-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const modal = document.getElementById('modal');
+    const exportedImg = document.getElementById('exported-img');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const downloadMaskLink = document.getElementById('download-mask-link');
+
+    let brushRadius = parseInt(brushSizeSlider.value, 10);
+    let isDrawing = false;
+    let historyStack = [];
+
+    // Setup initial sample image (gradient with coffee mug placeholder)
+    function setupSampleImage() {
+      const sample = document.createElement('canvas');
+      sample.width = 800;
+      sample.height = 533;
+      const sCtx = sample.getContext('2d');
+      const grad = sCtx.createLinearGradient(0, 0, 800, 533);
+      grad.addColorStop(0, '#38bdf8');
+      grad.addColorStop(1, '#818cf8');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, 800, 533);
+      
+      // Draw simulated object to erase
+      sCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      sCtx.beginPath();
+      sCtx.arc(400, 266, 90, 0, Math.PI * 2);
+      sCtx.fill();
+      sCtx.fillStyle = '#0f172a';
+      sCtx.font = 'bold 22px sans-serif';
+      sCtx.textAlign = 'center';
+      sCtx.fillText('Object To Erase', 400, 274);
+
+      bgImg.src = sample.toDataURL('image/png');
+    }
+
+    bgImg.onload = () => {
+      canvas.width = bgImg.naturalWidth;
+      canvas.height = bgImg.naturalHeight;
+      resetCanvasContext();
+      historyStack = [];
+    };
+
+    function resetCanvasContext() {
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.65)'; // High-visibility pink overlay
+      ctx.fillStyle = 'rgba(236, 72, 153, 0.65)';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    // Brush size updates
+    brushSizeSlider.oninput = (e) => {
+      brushRadius = parseInt(e.target.value, 10);
+      brushSizeVal.textContent = brushRadius + 'px';
+      updateCursorSize();
+    };
+
+    function updateCursorSize() {
+      brushCursor.style.width = (brushRadius * 2) + 'px';
+      brushCursor.style.height = (brushRadius * 2) + 'px';
+    }
+    updateCursorSize();
+
+    // Canvas Coordinates conversion
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    // Save history snapshot
+    function pushHistory() {
+      if (historyStack.length >= 10) historyStack.shift();
+      historyStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      pushHistory();
+      const { x, y } = getCanvasCoords(e);
+      ctx.beginPath();
+      ctx.arc(x, y, brushRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const { x, y } = getCanvasCoords(e);
+      ctx.lineWidth = brushRadius * 2;
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+
+    function stopDrawing() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      ctx.beginPath();
+    }
+
+    // Pointer Events
+    canvas.addEventListener('mousedown', startDrawing);
+    window.addEventListener('mousemove', (e) => {
+      // Cursor follower
+      brushCursor.style.left = e.clientX + 'px';
+      brushCursor.style.top = e.clientY + 'px';
+      const rect = canvas.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        brushCursor.style.display = 'block';
+      } else {
+        brushCursor.style.display = 'none';
+      }
+      draw(e);
+    });
+    window.addEventListener('mouseup', stopDrawing);
+
+    // Touch Support
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+    canvas.addEventListener('touchend', stopDrawing);
+
+    // File Upload
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        bgImg.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Undo
+    undoBtn.onclick = () => {
+      if (historyStack.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      const previous = historyStack.pop();
+      ctx.putImageData(previous, 0, 0);
+      resetCanvasContext();
+    };
+
+    // Clear
+    clearBtn.onclick = () => {
+      pushHistory();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      resetCanvasContext();
+    };
+
+    // Export Binary Mask
+    exportBtn.onclick = () => {
+      const offscreen = document.createElement('canvas');
+      offscreen.width = canvas.width;
+      offscreen.height = canvas.height;
+      const offCtx = offscreen.getContext('2d');
+
+      // Black background
+      offCtx.fillStyle = '#000000';
+      offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
+
+      // Draw mask overlay
+      offCtx.drawImage(canvas, 0, 0);
+      const imgData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        // Any drawn pixel becomes solid white #FFFFFF
+        if (data[i + 3] > 20) {
+          data[i] = 255;
+          data[i + 1] = 255;
+          data[i + 2] = 255;
+          data[i + 3] = 255;
+        } else {
+          data[i] = 0;
+          data[i + 1] = 0;
+          data[i + 2] = 0;
+          data[i + 3] = 255;
+        }
+      }
+      offCtx.putImageData(imgData, 0, 0);
+
+      const maskUrl = offscreen.toDataURL('image/png');
+      exportedImg.src = maskUrl;
+      downloadMaskLink.href = maskUrl;
+      modal.classList.add('active');
+    };
+
+    closeModalBtn.onclick = () => modal.classList.remove('active');
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+
+    setupSampleImage();
+  </script>
+</body>
+</html>
