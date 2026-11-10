@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zeus-athena.github.io/canvas-inpainting-mask-editor/sitemap.xml

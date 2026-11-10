@@ -25,6 +25,7 @@ This repository provides a standalone, production-tested interactive canvas comp
 - 🎯 **AI Inpainting Binary Export**: Exports pixel-perfect black & white mask images (`#000000` background, `#ffffff` brush areas) matching original image dimensions.
 - 📐 **Dynamic Brush Cursor**: Visual circle cursor tracking current brush radius in real-time.
 - 🔄 **Undo & Clear History**: Multi-step history stack for mistake recovery.
+- ⌨️ **Keyboard Shortcuts & Drag-and-Drop**: `Cmd/Ctrl + Z` undo, `[` / `]` brush resizing, and instant image drag-and-drop.
 - 📱 **Mobile & Desktop Ready**: Full pointer event abstraction supporting mouse, Apple Pencil, and touch screens.
 - ⚡ **Zero Dependencies**: Pure HTML5 Canvas 2D and vanilla JavaScript. No heavy UI framework or canvas wrapper needed.
 

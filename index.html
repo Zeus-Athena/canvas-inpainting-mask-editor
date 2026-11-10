@@ -3,20 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Canvas Inpainting Mask Editor — Interactive Demo</title>
-  <meta name="description" content="A lightweight zero-dependency HTML5 Canvas brush masking tool for AI image inpainting & object removal." />
+  <title>Canvas Inpainting Mask Editor — Interactive Demo & Free AI Brush Masking Tool</title>
+  <meta name="description" content="A lightweight zero-dependency HTML5 Canvas brush masking tool for AI image inpainting models (LaMa, Stable Diffusion, Flux). Paint over objects and export pixel-perfect binary masks." />
+  <link rel="canonical" href="https://zeus-athena.github.io/canvas-inpainting-mask-editor/" />
+
+  <!-- OpenGraph / Social Sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Canvas Inpainting Mask Editor — Interactive Demo" />
+  <meta property="og:description" content="A lightweight zero-dependency HTML5 Canvas brush masking tool for AI image inpainting & object removal. Export binary masks for LaMa, Stable Diffusion, or Flux." />
+  <meta property="og:url" content="https://zeus-athena.github.io/canvas-inpainting-mask-editor/" />
+  <meta property="og:image" content="https://zeus-athena.github.io/canvas-inpainting-mask-editor/apple-touch-icon.png" />
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Canvas Inpainting Mask Editor — Interactive Demo" />
+  <meta name="twitter:description" content="Lightweight zero-dependency HTML5 Canvas brush masking tool for AI image inpainting & object removal." />
+  <meta name="twitter:image" content="https://zeus-athena.github.io/canvas-inpainting-mask-editor/apple-touch-icon.png" />
+
+  <!-- Structured Data: WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Canvas Inpainting Mask Editor",
+    "url": "https://zeus-athena.github.io/canvas-inpainting-mask-editor/",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "All",
+    "description": "A lightweight zero-dependency HTML5 Canvas brush masking tool for AI image inpainting and object removal workflows.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "CleanerPix",
+      "url": "https://cleanerpix.com"
+    }
+  }
+  </script>
+
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
   <link rel="apple-touch-icon" sizes="192x192" href="apple-touch-icon.png" />
+
   <style>
     :root {
       --primary: #6366f1;
       --primary-hover: #4f46e5;
       --bg: #0f172a;
       --surface: #1e293b;
+      --surface-hover: #27354a;
       --border: #334155;
       --text: #f8fafc;
       --text-muted: #94a3b8;
+      --emerald: #10b981;
+      --emerald-hover: #059669;
     }
 
     * {
@@ -32,13 +74,14 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      line-height: 1.5;
     }
 
     header {
-      background: rgba(30, 41, 59, 0.8);
+      background: rgba(30, 41, 59, 0.85);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 16px 24px;
+      padding: 14px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -78,11 +121,18 @@
       gap: 6px;
       transition: all 0.2s ease;
       box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+      border: none;
+      cursor: pointer;
     }
 
     .btn-cleanerpix:hover {
       opacity: 0.92;
       transform: translateY(-1px);
+    }
+
+    .btn-emerald {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
     }
 
     .gh-link {
@@ -92,6 +142,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      transition: color 0.15s ease;
     }
 
     .gh-link:hover {
@@ -103,15 +154,15 @@
       max-width: 1000px;
       width: 100%;
       margin: 0 auto;
-      padding: 32px 20px;
+      padding: 32px 20px 48px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 32px;
     }
 
     .intro {
       text-align: center;
-      max-width: 700px;
+      max-width: 760px;
       margin: 0 auto;
     }
 
@@ -122,6 +173,7 @@
       background: linear-gradient(to right, #f8fafc, #94a3b8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
     }
 
     .intro p {
@@ -142,7 +194,7 @@
 
     .toolbar {
       padding: 14px 20px;
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(15, 23, 42, 0.65);
       border-bottom: 1px solid var(--border);
       display: flex;
       flex-wrap: wrap;
@@ -155,6 +207,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .slider-wrap {
@@ -163,6 +216,16 @@
       gap: 10px;
       font-size: 0.9rem;
       color: var(--text-muted);
+    }
+
+    .key-badge {
+      font-size: 0.72rem;
+      padding: 2px 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      margin-left: 2px;
     }
 
     input[type="range"] {
@@ -182,7 +245,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease;
     }
 
     button:hover, label.btn-upload:hover {
@@ -214,6 +277,13 @@
       overflow: hidden;
       user-select: none;
       touch-action: none;
+      transition: outline 0.2s ease;
+    }
+
+    .canvas-container.drag-over {
+      outline: 2px dashed var(--primary);
+      outline-offset: -8px;
+      background: #0f172a;
     }
 
     #stage {
@@ -243,10 +313,23 @@
       pointer-events: none;
       border: 2px solid rgba(255, 255, 255, 0.85);
       border-radius: 50%;
-      background: rgba(168, 85, 247, 0.25);
+      background: rgba(236, 72, 153, 0.25);
       transform: translate(-50%, -50%);
       display: none;
       z-index: 100;
+    }
+
+    .editor-footer-tip {
+      padding: 10px 20px;
+      background: rgba(15, 23, 42, 0.4);
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     /* Modal for exported mask */
@@ -257,6 +340,7 @@
       right: 0;
       bottom: 0;
       background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -272,13 +356,19 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
-      max-width: 500px;
+      max-width: 520px;
       width: 100%;
-      padding: 24px;
+      padding: 26px;
       text-align: center;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .modal-content h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
     }
 
     .modal-content img {
@@ -287,6 +377,137 @@
       border: 1px solid var(--border);
       background: black;
       margin: 0 auto;
+      border-radius: 6px;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .modal-actions-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    /* Rich Documentation & SEO Sections */
+    .seo-section {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      margin-top: 12px;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-card p, .info-card li {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .info-card ul {
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .faq-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .faq-container h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .faq-question {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .faq-answer {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .faq-answer a, .info-card a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    .faq-answer a:hover, .info-card a:hover {
+      text-decoration: underline;
+    }
+
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 14px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .cta-text h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .cta-text p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
     }
 
     footer {
@@ -305,6 +526,23 @@
 
     footer a:hover {
       text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .intro h1 {
+        font-size: 1.7rem;
+      }
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .tool-group {
+        justify-content: space-between;
+      }
+      .cta-banner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -342,7 +580,7 @@
   <main>
     <div class="intro">
       <h1>Inpainting Brush Mask Canvas</h1>
-      <p>Interactive client-side canvas mask editor for AI image inpainting models. Paint over unwanted objects, labels, or stickers, and extract the binary mask.</p>
+      <p>Interactive client-side canvas mask editor for AI image inpainting models. Paint over unwanted objects, people, labels, or watermarks, and export standard binary masks in real-time.</p>
     </div>
 
     <div class="editor-wrapper">
@@ -358,15 +596,16 @@
             <span>Brush Size</span>
             <input type="range" id="brush-size" min="6" max="90" value="32" />
             <span id="brush-size-val">32px</span>
+            <span class="key-badge">[ / ]</span>
           </div>
         </div>
 
         <div class="tool-group">
-          <button id="undo-btn">
+          <button id="undo-btn" title="Undo stroke (Cmd+Z / Ctrl+Z)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
-            Undo
+            Undo <span class="key-badge">⌘Z</span>
           </button>
-          <button id="clear-btn">
+          <button id="clear-btn" title="Clear all mask strokes">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             Clear
           </button>
@@ -383,33 +622,115 @@
           <canvas id="mask-canvas"></canvas>
         </div>
       </div>
+
+      <div class="editor-footer-tip">
+        <span>💡 <strong>Tip:</strong> Drag and drop any image directly onto the canvas to start editing.</span>
+        <span>Keyboard: <code>⌘Z</code> Undo · <code>[</code> / <code>]</code> Resize brush</span>
+      </div>
     </div>
+
+    <!-- Conversion Banner -->
+    <div class="cta-banner">
+      <div class="cta-text">
+        <h3>Need to execute 4K AI Inpainting without local GPU?</h3>
+        <p>CleanerPix erases objects, watermarks, text, and photobombers with one click online.</p>
+      </div>
+      <a href="https://cleanerpix.com" target="_blank" class="btn-cleanerpix btn-emerald">
+        Try CleanerPix Free &rarr;
+      </a>
+    </div>
+
+    <!-- SEO & Technical Documentation Section -->
+    <section class="seo-section">
+      <div class="card-grid">
+        <div class="info-card">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+            How AI Masking Works
+          </h3>
+          <p>
+            Inpainting models require two inputs: the original RGB image and a single-channel binary mask image.
+          </p>
+          <ul>
+            <li><strong>Black (#000000)</strong>: Unmodified background pixels to be preserved.</li>
+            <li><strong>White (#FFFFFF)</strong>: Masked defect regions to be regenerated by generative diffusion or adversarial models.</li>
+            <li><strong>Exact Dimension Match</strong>: The exported mask resolution must match the source image at 1:1 pixel parity.</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <h3>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+            Compatible Inpainting Backends
+          </h3>
+          <p>The exported PNG mask directly plugs into standard computer vision pipelines:</p>
+          <ul>
+            <li><strong>LaMa (Large Mask Inpainting)</strong>: Fast resolution-robust Fourier convolution inpainting.</li>
+            <li><strong>Stable Diffusion & Flux Fill</strong>: Latent diffusion inpainting pipelines (<code>diffusers.StableDiffusionInpaintPipeline</code>).</li>
+            <li><strong>OpenCV Inpaint</strong>: Fast local boundary inpainting via <code>cv2.INPAINT_TELEA</code> and <code>cv2.INPAINT_NS</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FAQ Accordion / Cards -->
+      <div class="faq-container">
+        <h2>Frequently Asked Questions</h2>
+        
+        <div class="faq-item">
+          <div class="faq-question">How can I run AI inpainting directly online without writing Python code?</div>
+          <div class="faq-answer">
+            You can use <a href="https://cleanerpix.com" target="_blank">CleanerPix</a>, a production-grade online AI photo cleaner. It runs high-resolution inpainting models directly in the cloud to <a href="https://cleanerpix.com/remove-object-from-photo" target="_blank">remove objects from photos</a>, <a href="https://cleanerpix.com/remove-watermark-from-photo" target="_blank">erase watermarks</a>, and remove unwanted people in seconds.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Why use pure HTML5 Canvas instead of heavy UI libraries?</div>
+          <div class="faq-answer">
+            This component has zero external dependencies, weighing less than 10KB. It runs directly via the native 2D Canvas context, guaranteeing smooth 60fps gesture response across desktop browsers, iPads, and mobile touchscreens without loading Megabytes of bundle overhead.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">How does the mask thresholding algorithm work?</div>
+          <div class="faq-answer">
+            User strokes are drawn onto an overlay canvas using semi-transparent rgba strokes for visual feedback. Upon export, an offscreen canvas extracts the alpha channel of every pixel: pixels with alpha &gt; 20 are mapped to <code>#FFFFFF</code> (255, 255, 255), and transparent areas are mapped to <code>#000000</code> (0, 0, 0).
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <!-- Modal for exported mask -->
   <div class="modal" id="modal">
     <div class="modal-content">
       <h3>Exported Binary Inpainting Mask</h3>
-      <p style="font-size: 0.88rem; color: var(--text-muted);">Standard black/white mask ready for AI inpainting APIs (LaMa, Stable Diffusion, OpenCV).</p>
+      <p style="font-size: 0.88rem; color: var(--text-muted);">Standard black/white mask ready for AI inpainting APIs (LaMa, Stable Diffusion, Flux, OpenCV).</p>
       <img id="exported-img" alt="Mask Result" />
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button id="close-modal-btn">Close</button>
-        <a id="download-mask-link" class="btn-cleanerpix" download="mask.png">Download Mask</a>
+      <div class="modal-actions">
+        <a href="https://cleanerpix.com?ref=mask-editor-modal" target="_blank" class="btn-cleanerpix btn-emerald" style="justify-content: center;">
+          ✨ Run AI Inpainting on CleanerPix (Free) &rarr;
+        </a>
+        <div class="modal-actions-row">
+          <button id="close-modal-btn">Close</button>
+          <a id="download-mask-link" class="btn-cleanerpix" download="mask.png">Download Mask PNG</a>
+        </div>
       </div>
     </div>
   </div>
 
   <footer>
     <p>
-      Adapted from the production pipeline of <a href="https://cleanerpix.com" target="_blank">CleanerPix</a> — Free online AI photo eraser & cleanup tool.
+      Extracted from the production frontend of <a href="https://cleanerpix.com" target="_blank">CleanerPix</a> — Free online AI photo eraser & cleanup tool.
       <br />
-      <span style="font-size: 0.8rem; opacity: 0.8; margin-top: 6px; display: inline-block;">
+      <span style="font-size: 0.82rem; opacity: 0.85; margin-top: 8px; display: inline-block;">
         Community: <a href="https://www.producthunt.com/products/cleanerpix" target="_blank" rel="noopener">Product Hunt</a> · 
-        Read our guides: <a href="https://cleanerpix.com/remove-sticker-from-image">Sticker Removal</a> · <a href="https://cleanerpix.com/remove-text-from-image">Text Remover</a> · <a href="https://cleanerpix.com/blog/cleanup-pictures-alternatives">Cleanup Pictures Alternatives</a>
+        Related Guides: <a href="https://cleanerpix.com/remove-sticker-from-image">Sticker Removal</a> · <a href="https://cleanerpix.com/remove-text-from-image">Text Remover</a> · <a href="https://cleanerpix.com/blog/cleanup-pictures-alternatives">Cleanup Pictures Alternatives</a>
       </span>
     </p>
   </footer>
 
   <script>
+    const container = document.getElementById('container');
     const stage = document.getElementById('stage');
     const bgImg = document.getElementById('bg-img');
     const canvas = document.getElementById('mask-canvas');
@@ -470,10 +791,15 @@
     }
 
     // Brush size updates
-    brushSizeSlider.oninput = (e) => {
-      brushRadius = parseInt(e.target.value, 10);
+    function setBrushRadius(val) {
+      brushRadius = Math.max(6, Math.min(90, val));
+      brushSizeSlider.value = brushRadius;
       brushSizeVal.textContent = brushRadius + 'px';
       updateCursorSize();
+    }
+
+    brushSizeSlider.oninput = (e) => {
+      setBrushRadius(parseInt(e.target.value, 10));
     };
 
     function updateCursorSize() {
@@ -497,7 +823,7 @@
 
     // Save history snapshot
     function pushHistory() {
-      if (historyStack.length >= 10) historyStack.shift();
+      if (historyStack.length >= 15) historyStack.shift();
       historyStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
     }
 
@@ -549,19 +875,39 @@
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
     canvas.addEventListener('touchend', stopDrawing);
 
-    // File Upload
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    // Load Image Helper
+    function loadFileImage(file) {
+      if (!file || !file.type.startsWith('image/')) return;
       const reader = new FileReader();
       reader.onload = (event) => {
         bgImg.src = event.target.result;
       };
       reader.readAsDataURL(file);
+    }
+
+    // File Input
+    fileInput.onchange = (e) => {
+      loadFileImage(e.target.files[0]);
     };
 
-    // Undo
-    undoBtn.onclick = () => {
+    // Drag and Drop
+    container.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      container.classList.add('drag-over');
+    });
+    container.addEventListener('dragleave', () => {
+      container.classList.remove('drag-over');
+    });
+    container.addEventListener('drop', (e) => {
+      e.preventDefault();
+      container.classList.remove('drag-over');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        loadFileImage(e.dataTransfer.files[0]);
+      }
+    });
+
+    // Undo action
+    function doUndo() {
       if (historyStack.length === 0) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;
@@ -569,14 +915,29 @@
       const previous = historyStack.pop();
       ctx.putImageData(previous, 0, 0);
       resetCanvasContext();
-    };
+    }
+    undoBtn.onclick = doUndo;
 
-    // Clear
+    // Clear action
     clearBtn.onclick = () => {
       pushHistory();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       resetCanvasContext();
     };
+
+    // Keyboard Shortcuts (Cmd+Z / Ctrl+Z, [ and ])
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        doUndo();
+      } else if (e.key === '[') {
+        e.preventDefault();
+        setBrushRadius(brushRadius - 4);
+      } else if (e.key === ']') {
+        e.preventDefault();
+        setBrushRadius(brushRadius + 4);
+      }
+    });
 
     // Export Binary Mask
     exportBtn.onclick = () => {
